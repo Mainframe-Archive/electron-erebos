@@ -86,7 +86,7 @@ app.on('ready', () => {
       const filePath = request.url.slice(11)
       console.log('request file', filePath)
 
-      if (p.length === 0) {
+      if (filePath.length === 0) {
         callback({
           mimeType: 'text/html',
           data: Buffer.from('<h5>Not found</h5>'),
