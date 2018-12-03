@@ -12,12 +12,11 @@ const isDevelopment = process.env.NODE_ENV !== 'production'
 let manifestHash =
   '19bbb8f61dac4c74e1ef7c20c9b439ab41446e23a3bc8de8f050c52b13c5ec81'
 
-const swarm = new SwarmClient({ bzz: 'https://swarm-gateways.net' })
+const swarm = new SwarmClient({ bzz: 'http://localhost:8500' })
 
 answerRenderer('upload-file', async params => {
   const options = {
     contentType: params.type,
-    manifestHash,
     path: params.distPath,
   }
   console.log('upload file', params)
