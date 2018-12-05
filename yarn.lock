@@ -701,23 +701,23 @@
     lodash "^4.17.10"
     to-fast-properties "^2.0.0"
 
-"@erebos/api-bzz-base@^0.5.0":
-  version "0.5.0"
-  resolved "https://registry.yarnpkg.com/@erebos/api-bzz-base/-/api-bzz-base-0.5.0.tgz#02ba8673f8314092c328df8778ba3d971b6e6356"
-  integrity sha512-oBuJ7DfZ+IHwVHjir+P++fpd0gJ5lnswVlcrFznEpvs7dgDBY693TbTq3gS+UcdK82kVwFvCSX5g5Vj6qWUw8g==
+"@erebos/api-bzz-base@^0.5.1":
+  version "0.5.1"
+  resolved "https://registry.yarnpkg.com/@erebos/api-bzz-base/-/api-bzz-base-0.5.1.tgz#13e609ff03c93c1b15dbf4e41b87efe05253ee69"
+  integrity sha512-vOvvT6ezc/1dfyIrFtAyaOfVUeRxYiFf+xp9kT7Gz2Zomo9IF+8ExQc/UObvJ/QP18k/RvaH7BCw5TqxEyY4vg==
   dependencies:
     "@babel/runtime" "^7.0.0"
     "@erebos/hex" "^0.5.0"
     elliptic MainframeHQ/elliptic#circular-dependencies-fix
     js-sha3 "^0.8.0"
 
-"@erebos/api-bzz-node@^0.5.0":
-  version "0.5.0"
-  resolved "https://registry.yarnpkg.com/@erebos/api-bzz-node/-/api-bzz-node-0.5.0.tgz#d38ff4837073a8f0a4429deb4bf24257630ad2a5"
-  integrity sha512-62tAcondAMLAfi4mLCffSi3nVGTFEH+QwqAaGXZb6fY/xPnYubNWnkX3tFxwbx0frZbpekkOtRv+vFseNo5UWw==
+"@erebos/api-bzz-node@^0.5.1":
+  version "0.5.1"
+  resolved "https://registry.yarnpkg.com/@erebos/api-bzz-node/-/api-bzz-node-0.5.1.tgz#856611e94848d64ed131da8c4d751b69ee9e1c0c"
+  integrity sha512-S1X2WWV4FYma/kkrJet2nEkqelLhWaN7eYAsyjWwY4RxcE5jaF+EWTjA/KDSAkZ+TXh9kz0nM6ZWMbMCOOt1ig==
   dependencies:
     "@babel/runtime" "^7.0.0"
-    "@erebos/api-bzz-base" "^0.5.0"
+    "@erebos/api-bzz-base" "^0.5.1"
     form-data "^2.3.3"
     fs-extra "^7.0.1"
     node-fetch "^2.3.0"
@@ -725,10 +725,10 @@
     tar-fs "^1.16.3"
     tar-stream "^1.6.1"
 
-"@erebos/api-pss@^0.5.0":
-  version "0.5.0"
-  resolved "https://registry.yarnpkg.com/@erebos/api-pss/-/api-pss-0.5.0.tgz#f2d34e273be2fbc6f9222c58ba2365f764ec59d2"
-  integrity sha512-S+ekFUXKwY+kiia/6I5AfWYsFZr9qvEm2J8DW2VfdhEnWNrRZ2sfJnpWU6dyFBbfN4EvrOcFi0bBuMv3SE6MNA==
+"@erebos/api-pss@^0.5.2":
+  version "0.5.2"
+  resolved "https://registry.yarnpkg.com/@erebos/api-pss/-/api-pss-0.5.2.tgz#377b8581fee1264278671ec8c8a879f1beb61203"
+  integrity sha512-1ZoyBAZUqD88vZCYUQ7Lwx37WehdmHwAk4sYMC2eCgWRqDdPNtzuulUuyWVV/5f9TWYn4xZQfIT8pSxc6Mdhvg==
   dependencies:
     "@babel/runtime" "^7.0.0"
     "@erebos/hex" "^0.5.0"
@@ -748,17 +748,15 @@
   dependencies:
     "@babel/runtime" "^7.0.0"
 
-"@erebos/swarm-node@^0.5.0":
-  version "0.5.0"
-  resolved "https://registry.yarnpkg.com/@erebos/swarm-node/-/swarm-node-0.5.0.tgz#ba9a02f40a5f5eaa7c0b9090e8b31166b1772dd1"
-  integrity sha512-2Kl/Wj3whuG6CwBexiHAaSD3NVqEMoktkuhFZtPV1dgdIJ3+RlMyEteBfEr8GTEG1lmWN6be5X+Ye0PA1gfBqA==
+"@erebos/swarm-node@../erebos/packages/swarm-node":
+  version "0.5.2"
   dependencies:
     "@babel/runtime" "^7.0.0"
-    "@erebos/api-bzz-base" "^0.5.0"
-    "@erebos/api-bzz-node" "^0.5.0"
-    "@erebos/api-pss" "^0.5.0"
+    "@erebos/api-bzz-base" "^0.5.1"
+    "@erebos/api-bzz-node" "^0.5.1"
+    "@erebos/api-pss" "^0.5.2"
     "@erebos/client-base" "^0.5.0"
-    "@mainframe/rpc-node" "^0.2.1"
+    "@mainframe/rpc-node" "^0.2.2"
     "@mainframe/rpc-stream" "^0.2.5"
 
 "@mainframe/rpc-base@^0.1.1":
@@ -808,14 +806,16 @@
     "@mainframe/rpc-stream" "^0.2.4"
     "@mainframe/transport-ipc" "^0.2.3"
 
-"@mainframe/rpc-node@^0.2.1":
-  version "0.2.1"
-  resolved "https://registry.yarnpkg.com/@mainframe/rpc-node/-/rpc-node-0.2.1.tgz#e7f67ac7b8cebc52c6f72d651cf1e6f95275598a"
-  integrity sha512-f0oTv+NLq0pZWc/KyjkzqF4mKin5lNwUjBAvNGMN8HBv5096TQtDogk+xp2O6ZQH9dcjtjXA9DY53RKkpP2uIg==
+"@mainframe/rpc-node@^0.2.2":
+  version "0.2.2"
+  resolved "https://registry.yarnpkg.com/@mainframe/rpc-node/-/rpc-node-0.2.2.tgz#0606fc92d8c6f97b6bde31d75891703fc4801b41"
+  integrity sha512-HV7w0jiuHfOz038hYiG2uApA3BuVm5hllzNO6/WzJaChyBfU+OdF/gCiNsgzJhvh9CkuH2uRZs+8/r/9l7axIg==
   dependencies:
+    "@babel/runtime" "^7.0.0"
     "@mainframe/rpc-http-node" "^0.1.1"
     "@mainframe/rpc-ipc" "^0.2.1"
     "@mainframe/rpc-ws-node" "^0.2.3"
+    rxjs "^6.3.3"
 
 "@mainframe/rpc-request@^0.1.2":
   version "0.1.2"

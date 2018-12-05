@@ -5,23 +5,39 @@ import { format as formatUrl } from 'url'
 import { SwarmClient } from '@erebos/swarm-node'
 import { app, BrowserWindow, protocol } from 'electron'
 import { answerRenderer } from 'electron-better-ipc'
+const encrypt = require('./encrypt')
+const decrypt = require('./decrypt')
+const {PassThrough} = require('stream')
+const fs = require('fs')
+
+function createStream (path) {
+  const readStream = fs.createReadStream(path)
+  return readStream
+}
 
 const isDevelopment = process.env.NODE_ENV !== 'production'
+let manifestHash
 
 // Hardcoded for demo only - should be kept track of
-let manifestHash =
-  '19bbb8f61dac4c74e1ef7c20c9b439ab41446e23a3bc8de8f050c52b13c5ec81'
+const password = 'password'
+let fpath
 
 const swarm = new SwarmClient({ bzz: 'http://localhost:8500' })
 
 answerRenderer('upload-file', async params => {
+  fpath = params.localPath
   const options = {
     contentType: params.type,
     path: params.distPath,
   }
+  console.log(params, 'params')
   console.log('upload file', params)
-  manifestHash = await swarm.bzz.uploadFileFrom(params.localPath, options)
+  let encryptedStream = encrypt({file: params.localPath, password: password})
+  console.log(encryptedStream, 'encryptedStream')
+  manifestHash = await swarm.bzz.uploadTarStream(encryptedStream)
+  console.log(manifestHash, 'manifestHash')
   return `app-file://${params.distPath}`
+  // return 'hello'
 })
 
 // global reference to mainWindow (necessary to prevent window from being garbage collected)
@@ -78,12 +94,14 @@ app.on('activate', () => {
 
 // create main BrowserWindow when electron is ready
 app.on('ready', () => {
-  protocol.registerBufferProtocol(
+  protocol.registerStreamProtocol(
     'app-file',
     async (request, callback) => {
+      console.log('app on ready')
       // URL starts with `app-file://`
       const filePath = request.url.slice(11)
       console.log('request file', filePath)
+      console.log(request, 'request')
 
       if (filePath.length === 0) {
         callback({
@@ -91,10 +109,22 @@ app.on('ready', () => {
           data: Buffer.from('<h5>Not found</h5>'),
         })
       } else {
-        const res = await swarm.bzz.download(`${manifestHash}/${filePath}`)
-        const data = await res.buffer()
-        const contentType = res.headers.get('Content-Type').split('; charset=')
-        callback({ data, mimeType: contentType[0], charset: contentType[1] })
+        console.log('else')
+        const encryptedStream = await swarm.bzz.downloadTar(manifestHash)
+        // const data = await res.buffer()
+        // const contentType = res.headers.get('Content-Type').split('; charset=')
+        // callback({ data, mimeType: contentType[0], charset: contentType[1] })
+        // const data = 'world'
+        const data = createStream(filePath)
+        // callback({data})
+        console.log(data, 'data')
+        callback({
+          statusCode: 200,
+          headers: {
+            'content-type': 'image/jpg'
+          },
+          data: createStream(fpath)
+        })
       }
     },
     error => {
