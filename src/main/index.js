@@ -5,39 +5,88 @@ import { format as formatUrl } from 'url'
 import { SwarmClient } from '@erebos/swarm-node'
 import { app, BrowserWindow, protocol } from 'electron'
 import { answerRenderer } from 'electron-better-ipc'
-const encrypt = require('./encrypt')
-const decrypt = require('./decrypt')
-const {PassThrough} = require('stream')
-const fs = require('fs')
+import { promisify } from 'util'
+import { Transform, pipeline } from 'stream'
+import { createReadStream, createWriteStream } from 'fs'
+const crypto = require('crypto')
 
-function createStream (path) {
-  const readStream = fs.createReadStream(path)
-  return readStream
-}
+const asyncPipeline = promisify(pipeline)
+const INITIALIZATION_VECTOR_SIZE = 16
 
 const isDevelopment = process.env.NODE_ENV !== 'production'
 let manifestHash
 
+class PrependInitializationVector extends Transform {
+  constructor(iv) {
+    super()
+    this._added = false
+    this._iv = iv
+  }
+
+  _transform(chunk, encoding, callback) {
+    if (!this._added) {
+      this._added = true
+      this.push(this._iv)
+    }
+    this.push(chunk)
+    callback()
+  }
+}
+
+class Decrypt extends Transform {
+  constructor(cipherKey) {
+    super()
+    this.cipherKey = cipherKey
+  }
+
+  _transform(chunk, encoding, callback) {
+    if (!this._decode) {
+      const iv = chunk.slice(0, INITIALIZATION_VECTOR_SIZE)
+
+      this._decode = crypto.createDecipheriv('aes256', this.cipherKey, iv)
+      this._decode.on('data', c => {
+        this.push(c)
+      })
+      this._decode.on('end', () => {
+        this.emit('end')
+      })
+
+      this._decode.write(chunk.slice(INITIALIZATION_VECTOR_SIZE, chunk.length))
+    } else {
+      this._decode.write(chunk)
+    }
+    callback()
+  }
+}
+
 // Hardcoded for demo only - should be kept track of
 const password = 'password'
-let fpath
+
+const getCipherKey = (password) => {
+  return crypto.createHash('sha256').update(password).digest()
+}
+const cipherKey = getCipherKey(password)
+const iv = crypto.randomBytes(16)
+const cipher = crypto.createCipheriv('aes256', cipherKey, iv)
 
 const swarm = new SwarmClient({ bzz: 'http://localhost:8500' })
 
 answerRenderer('upload-file', async params => {
-  fpath = params.localPath
-  const options = {
-    contentType: params.type,
-    path: params.distPath,
+  try {
+    const options = {
+      contentType: params.type,
+      path: params.distPath,
+    }
+
+    console.log(params, 'params')
+    const body = createReadStream(params.localPath).pipe(cipher).pipe(new PrependInitializationVector(iv))
+    manifestHash = await swarm.bzz._upload(body, {}, {'content-type': params.type})
+    return `app-file://${params.distPath}`
+  } catch (error) {
+    return {
+      error: error.message
+    }
   }
-  console.log(params, 'params')
-  console.log('upload file', params)
-  let encryptedStream = encrypt({file: params.localPath, password: password})
-  console.log(encryptedStream, 'encryptedStream')
-  manifestHash = await swarm.bzz.uploadTarStream(encryptedStream)
-  console.log(manifestHash, 'manifestHash')
-  return `app-file://${params.distPath}`
-  // return 'hello'
 })
 
 // global reference to mainWindow (necessary to prevent window from being garbage collected)
@@ -109,22 +158,9 @@ app.on('ready', () => {
           data: Buffer.from('<h5>Not found</h5>'),
         })
       } else {
-        console.log('else')
-        const encryptedStream = await swarm.bzz.downloadTar(manifestHash)
-        // const data = await res.buffer()
-        // const contentType = res.headers.get('Content-Type').split('; charset=')
-        // callback({ data, mimeType: contentType[0], charset: contentType[1] })
-        // const data = 'world'
-        const data = createStream(filePath)
-        // callback({data})
-        console.log(data, 'data')
-        callback({
-          statusCode: 200,
-          headers: {
-            'content-type': 'image/jpg'
-          },
-          data: createStream(fpath)
-        })
+        const res = await swarm.bzz._download(`${manifestHash}/${filePath}`, 'default')
+        const data = res.body.pipe(new Decrypt(cipherKey))
+        callback({ data: data })
       }
     },
     error => {

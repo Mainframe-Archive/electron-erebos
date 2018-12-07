@@ -748,8 +748,10 @@
   dependencies:
     "@babel/runtime" "^7.0.0"
 
-"@erebos/swarm-node@../erebos/packages/swarm-node":
+"@erebos/swarm-node@^0.5.2":
   version "0.5.2"
+  resolved "https://registry.yarnpkg.com/@erebos/swarm-node/-/swarm-node-0.5.2.tgz#9980afc0243d629fed42b1ee18b17663fe81185b"
+  integrity sha512-wzJBeewyzhkp+w5iH8RHZZszGWhRWOdDK6Kt4rEeBHaDrhqFwhXgTQB8gcvp6VaQNLS2G9OeRANSFhp5/8gm+A==
   dependencies:
     "@babel/runtime" "^7.0.0"
     "@erebos/api-bzz-base" "^0.5.1"

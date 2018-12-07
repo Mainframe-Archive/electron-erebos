@@ -9,7 +9,7 @@
     "dist:dir": "yarn dist --dir -c.compression=store -c.mac.identity=null"
   },
   "dependencies": {
-    "@erebos/swarm-node": "../erebos/packages/swarm-node",
+    "@erebos/swarm-node": "^0.5.2",
     "electron-better-ipc": "^0.1.1",
     "react": "^16.6.3",
     "react-dom": "^16.6.3",

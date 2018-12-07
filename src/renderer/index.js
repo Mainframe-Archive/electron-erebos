@@ -13,13 +13,18 @@ class App extends Component {
     const file = this.fileRef.current.files[0]
     console.log('file to upload', file)
     if (file != null) {
-      const url = await callMain('upload-file', {
-        localPath: file.path,
-        distPath: file.name,
-        type: file.type,
-      })
-      console.log('file uploaded', url)
-      this.setState({ url })
+      try {
+        const url = await callMain('upload-file', {
+          localPath: file.path,
+          distPath: file.name,
+          type: file.type,
+        })
+        console.log('file uploaded', url)
+        this.setState({ url })
+      }
+      catch(error) {
+        console.log(error, 'error')
+      }
     }
   }
 
