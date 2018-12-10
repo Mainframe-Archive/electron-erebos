@@ -1,6 +1,7 @@
 'use strict'
 
 import * as path from 'path'
+import * as mime from 'mime'
 import { format as formatUrl } from 'url'
 import { SwarmClient } from '@erebos/swarm-node'
 import { app, BrowserWindow, protocol } from 'electron'
@@ -66,19 +67,17 @@ const getCipherKey = (password) => {
   return crypto.createHash('sha256').update(password).digest()
 }
 const cipherKey = getCipherKey(password)
-const iv = crypto.randomBytes(16)
-const cipher = crypto.createCipheriv('aes256', cipherKey, iv)
 
 const swarm = new SwarmClient({ bzz: 'http://localhost:8500' })
 
 answerRenderer('upload-file', async params => {
   try {
+    const iv = crypto.randomBytes(16)
+    const cipher = crypto.createCipheriv('aes256', cipherKey, iv)
     const options = {
       contentType: params.type,
       path: params.distPath,
     }
-
-    console.log(params, 'params')
     const body = createReadStream(params.localPath).pipe(cipher).pipe(new PrependInitializationVector(iv))
     manifestHash = await swarm.bzz._upload(body, {}, {'content-type': params.type})
     return `app-file://${params.distPath}`
@@ -146,11 +145,8 @@ app.on('ready', () => {
   protocol.registerStreamProtocol(
     'app-file',
     async (request, callback) => {
-      console.log('app on ready')
       // URL starts with `app-file://`
       const filePath = request.url.slice(11)
-      console.log('request file', filePath)
-      console.log(request, 'request')
 
       if (filePath.length === 0) {
         callback({
@@ -158,9 +154,15 @@ app.on('ready', () => {
           data: Buffer.from('<h5>Not found</h5>'),
         })
       } else {
+        const contentType = mime.getType(filePath)
         const res = await swarm.bzz._download(`${manifestHash}/${filePath}`, 'default')
         const data = res.body.pipe(new Decrypt(cipherKey))
-        callback({ data: data })
+        callback({
+          headers: {
+            'content-type': contentType
+          },
+          data: data
+        })
       }
     },
     error => {
