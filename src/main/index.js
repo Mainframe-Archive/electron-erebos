@@ -6,79 +6,22 @@ import { format as formatUrl } from 'url'
 import { SwarmClient } from '@erebos/swarm-node'
 import { app, BrowserWindow, protocol } from 'electron'
 import { answerRenderer } from 'electron-better-ipc'
-import { promisify } from 'util'
-import { Transform, pipeline } from 'stream'
-import { createReadStream, createWriteStream } from 'fs'
-const crypto = require('crypto')
-
-const asyncPipeline = promisify(pipeline)
-const INITIALIZATION_VECTOR_SIZE = 16
+import { createReadStream } from 'fs'
+import { createSecretStreamKey, createEncryptStream, createDecryptStream } from '@mainframe/utils-crypto'
 
 const isDevelopment = process.env.NODE_ENV !== 'production'
 let manifestHash
 
-class PrependInitializationVector extends Transform {
-  constructor(iv) {
-    super()
-    this._added = false
-    this._iv = iv
-  }
-
-  _transform(chunk, encoding, callback) {
-    if (!this._added) {
-      this._added = true
-      this.push(this._iv)
-    }
-    this.push(chunk)
-    callback()
-  }
-}
-
-class Decrypt extends Transform {
-  constructor(cipherKey) {
-    super()
-    this.cipherKey = cipherKey
-  }
-
-  _transform(chunk, encoding, callback) {
-    if (!this._decode) {
-      const iv = chunk.slice(0, INITIALIZATION_VECTOR_SIZE)
-
-      this._decode = crypto.createDecipheriv('aes256', this.cipherKey, iv)
-      this._decode.on('data', c => {
-        this.push(c)
-      })
-      this._decode.on('end', () => {
-        this.emit('end')
-      })
-
-      this._decode.write(chunk.slice(INITIALIZATION_VECTOR_SIZE, chunk.length))
-    } else {
-      this._decode.write(chunk)
-    }
-    callback()
-  }
-}
-
 // Hardcoded for demo only - should be kept track of
 const password = 'password'
 
-const getCipherKey = (password) => {
-  return crypto.createHash('sha256').update(password).digest()
-}
-const cipherKey = getCipherKey(password)
+const streamKey = createSecretStreamKey()
 
 const swarm = new SwarmClient({ bzz: 'http://localhost:8500' })
 
 answerRenderer('upload-file', async params => {
   try {
-    const iv = crypto.randomBytes(16)
-    const cipher = crypto.createCipheriv('aes256', cipherKey, iv)
-    const options = {
-      contentType: params.type,
-      path: params.distPath,
-    }
-    const body = createReadStream(params.localPath).pipe(cipher).pipe(new PrependInitializationVector(iv))
+    const body = createReadStream(params.localPath).pipe(createEncryptStream(streamKey))
     manifestHash = await swarm.bzz._upload(body, {}, {'content-type': params.type})
     return `app-file://${params.distPath}`
   } catch (error) {
@@ -100,7 +43,6 @@ function createMainWindow() {
 
   if (isDevelopment) {
     window.loadURL(`http://localhost:${process.env.ELECTRON_WEBPACK_WDS_PORT}`)
-    // window.loadURL('app://files/index.html')
   } else {
     window.loadURL(
       formatUrl({
@@ -156,7 +98,7 @@ app.on('ready', () => {
       } else {
         const contentType = mime.getType(filePath)
         const res = await swarm.bzz._download(`${manifestHash}/${filePath}`, 'default')
-        const data = res.body.pipe(new Decrypt(cipherKey))
+        const data = res.body.pipe(createDecryptStream(streamKey))
         callback({
           headers: {
             'content-type': contentType
