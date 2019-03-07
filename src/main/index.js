@@ -2,6 +2,7 @@
 
 import * as path from 'path'
 import * as mime from 'mime'
+import getStream from 'get-stream'
 import { format as formatUrl } from 'url'
 import { SwarmClient } from '@erebos/swarm-node'
 import { app, BrowserWindow, protocol } from 'electron'
@@ -9,14 +10,9 @@ import { answerRenderer } from 'electron-better-ipc'
 import { createReadStream } from 'fs'
 import { createSecretStreamKey, createEncryptStream, createDecryptStream } from '@mainframe/utils-crypto'
 
-const isDevelopment = process.env.NODE_ENV !== 'production'
 let manifestHash
-
-// Hardcoded for demo only - should be kept track of
-const password = 'password'
-
+const isDevelopment = process.env.NODE_ENV !== 'production'
 const streamKey = createSecretStreamKey()
-
 const swarm = new SwarmClient({ bzz: 'http://localhost:8500' })
 
 answerRenderer('upload-file', async params => {
@@ -28,6 +24,31 @@ answerRenderer('upload-file', async params => {
     return {
       error: error.message
     }
+  }
+})
+
+answerRenderer('set', async params => {
+  try {
+    const Readable = require('stream').Readable
+    const dataStream = new Readable()
+    dataStream.push(params.data)
+    dataStream.push(null)
+    const body = dataStream.pipe(createEncryptStream(streamKey))
+    manifestHash = await swarm.bzz._upload(body, {}, {'content-type': 'text/plain'})
+    return manifestHash
+  } catch (error) {
+    return error.message
+  }
+})
+
+answerRenderer('get', async params => {
+  try {
+    const response = await swarm.bzz.download(params.manifestHash)
+    const stream = response.body.pipe(createDecryptStream(streamKey))
+    const data = await getStream(stream)
+    return data
+  } catch (error) {
+    return error.message
   }
 })
 

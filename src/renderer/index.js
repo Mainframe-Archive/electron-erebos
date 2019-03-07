@@ -7,6 +7,29 @@ class App extends Component {
 
   state = {
     url: null,
+    dataFetched: null,
+    latestName: null,
+    manifestHash: null,
+  }
+
+  setData = async () => {
+    try {
+      const response = await callMain('set', { data: 'some data' })
+      this.setState({ manifestHash: response })
+    }
+    catch(error) {
+      console.log(error, 'error')
+    }
+  }
+
+  getData = async () => {
+    try {
+      const response = await callMain('get', { manifestHash: this.state.manifestHash })
+      this.setState({ dataFetched: response })
+    }
+    catch(error) {
+      console.log(error, 'error')
+    }
   }
 
   onClick = async () => {
@@ -29,10 +52,18 @@ class App extends Component {
   }
 
   render() {
-    const { url } = this.state
+    const { url, manifestHash, dataFetched, latestName } = this.state
 
     return (
       <div>
+        <p>{latestName}</p>
+        <br/>
+        <button onClick={this.setData}>Set Data</button> <code>data: {manifestHash}</code>
+        <br/>
+        <br/>
+        <button onClick={this.getData}>Get Data</button> <code>data: {dataFetched}</code>
+        <br/>
+        <br/>
         <input type="file" ref={this.fileRef} />
         <button onClick={this.onClick}>Upload</button>
         {url ? <webview src={url} /> : null}
